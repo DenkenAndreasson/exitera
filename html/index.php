@@ -1,22 +1,37 @@
 <?php
+require_once __DIR__ . '/inc/db.php';
+
 $page_name = "OT Forum";
+
+$db = get_db();
+
+$stmt = $db->prepare("SELECT name, description FROM groups WHERE type = ? ORDER BY id");
+$stmt->execute(['community']);
+$communities = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $page_name ?></title>
+    <title><?= htmlspecialchars($page_name) ?></title>
 </head>
 <body>
-    <h1><?= $page_name ?></h1>
+    <h1><?= htmlspecialchars($page_name) ?></h1>
 
-    <p>Miljön är igång.</p>
+    <h2>Communities</h2>
 
-    <ul>
-        <li>PHP-version: <?= phpversion() ?></li>
-        <li>pdo_mysql laddad: <?= extension_loaded('pdo_mysql') ? 'ja' : 'NEJ' ?></li>
-        <li>DB_HOST: <?= getenv('DB_HOST') ?></li>
-    </ul>
+    <?php if (empty($communities)): ?>
+        <p>Inga communities hittades.</p>
+    <?php else: ?>
+        <ul>
+            <?php foreach ($communities as $community): ?>
+                <li>
+                    <strong><?= htmlspecialchars($community['name']) ?></strong><br>
+                    <?= htmlspecialchars($community['description']) ?>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
 </body>
 </html>
