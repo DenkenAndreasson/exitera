@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/inc/db.php';
+require_once __DIR__ . '/inc/box.php';
 
 $page_name = "OT Forum";
 
@@ -8,30 +9,28 @@ $db = get_db();
 $stmt = $db->prepare("SELECT name, description FROM groups WHERE type = ? ORDER BY id");
 $stmt->execute(['community']);
 $communities = $stmt->fetchAll();
+
+require __DIR__ . '/inc/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="sv">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($page_name) ?></title>
-</head>
-<body>
-    <h1><?= htmlspecialchars($page_name) ?></h1>
 
-    <h2>Communities</h2>
+<div class="layout">
+    <div class="col-main">
 
-    <?php if (empty($communities)): ?>
-        <p>Inga communities hittades.</p>
-    <?php else: ?>
-        <ul>
-            <?php foreach ($communities as $community): ?>
-                <li>
-                    <strong><?= htmlspecialchars($community['name']) ?></strong><br>
-                    <?= htmlspecialchars($community['description']) ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php endif; ?>
-</body>
-</html>
+        <?php box_start('Communities'); ?>
+            <ul class="group-list">
+                <?php foreach ($communities as $community): ?>
+                    <li>
+                        <span class="group-name"><?= htmlspecialchars($community['name']) ?></span><br>
+                        <span class="group-desc"><?= htmlspecialchars($community['description']) ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php box_end(); ?>
+
+    </div>
+
+    <aside class="col-side">
+    </aside>
+</div>
+
+<?php require __DIR__ . '/inc/footer.php'; ?>
