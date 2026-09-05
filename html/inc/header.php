@@ -19,6 +19,7 @@ if (!isset($page_name)) {
         <a href="/">Start</a>
         <a href="/groups/">Alla grupper</a>
         <a href="/login/">Logga in</a>
+        <a href="/register/">Skapa konto</a>
     </nav>
 </header>
 

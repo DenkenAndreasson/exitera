@@ -107,3 +107,62 @@ main {
         grid-template-columns: 1fr;
     }
 }
+
+.guild-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.member-count {
+    color: #888888;
+    font-size: 12px;
+}
+
+button {
+    background: #3a3a44;
+    color: #dddddd;
+    border: 1px solid #4a4a55;
+    padding: 6px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+    background: #4a4a55;
+}
+
+button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.col-side label {
+    display: block;
+    margin: 10px 0 4px 0;
+    color: #bbbbbb;
+    font-size: 13px;
+}
+
+.col-side input {
+    width: 100%;
+    padding: 6px 8px;
+    background: #1b1b1f;
+    border: 1px solid #3a3a42;
+    color: #dddddd;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.col-side button {
+    width: 100%;
+    margin-top: 12px;
+}
+
+.muted {
+    margin-bottom: 0;
+    color: #888888;
+    font-size: 12px;
+}
