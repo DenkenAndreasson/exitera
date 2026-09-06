@@ -57,18 +57,27 @@ require __DIR__ . '/inc/header.php';
 
     <aside class="col-side">
 
-        <?php box_start('Logga in'); ?>
-            <form method="post" action="/login/">
-                <label for="email">E-post</label>
-                <input type="email" id="email" name="email" required>
+        <?php if ($current_user === null): ?>
+            <?php box_start('Logga in'); ?>
+                <form method="post" action="/login/">
+                    <label for="email">E-post</label>
+                    <input type="email" id="email" name="email" required>
 
-                <label for="password">Lösenord</label>
-                <input type="password" id="password" name="password" required>
+                    <label for="password">Lösenord</label>
+                    <input type="password" id="password" name="password" required>
 
-                <button type="submit">Logga in</button>
-            </form>
-            <p class="muted">Har du inget konto? <a href="/register/">Skapa ett här</a>.</p>
-        <?php box_end(); ?>
+                    <button type="submit">Logga in</button>
+                </form>
+                <p class="muted">Har du inget konto? <a href="/register/">Skapa ett här</a>.</p>
+            <?php box_end(); ?>
+        <?php else: ?>
+            <?php box_start('Inloggad'); ?>
+                <p>Inloggad som <strong><?= htmlspecialchars($current_user['character_name'] ?? $current_user['first_name']) ?></strong>.</p>
+                <form method="post" action="/logout/">
+                    <button type="submit">Logga ut</button>
+                </form>
+            <?php box_end(); ?>
+        <?php endif; ?>
 
         <?php box_start('Min guild'); ?>
             <p>Currently no Guild, join one now!</p>

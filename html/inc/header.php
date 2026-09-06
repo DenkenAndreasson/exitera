@@ -1,7 +1,11 @@
 <?php
+require_once __DIR__ . '/auth.php';
+
 if (!isset($page_name)) {
     $page_name = 'Start';
 }
+
+$current_user = current_user();
 ?>
 <!DOCTYPE html>
 <html lang="sv">
@@ -18,8 +22,14 @@ if (!isset($page_name)) {
     <nav>
         <a href="/">Start</a>
         <a href="/groups/">Alla grupper</a>
-        <a href="/login/">Logga in</a>
-        <a href="/register/">Skapa konto</a>
+        <?php if ($current_user === null): ?>
+            <a href="/login/">Logga in</a>
+            <a href="/register/">Skapa konto</a>
+        <?php else: ?>
+            <form method="post" action="/logout/" class="nav-logout">
+                <button type="submit">Logga ut</button>
+            </form>
+        <?php endif; ?>
     </nav>
 </header>
 
