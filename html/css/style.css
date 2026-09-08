@@ -235,3 +235,27 @@ button:disabled {
 .guild-row button {
     margin-top: 0;
 }
+
+.post {
+    padding: 12px 0;
+    border-bottom: 1px solid #33333b;
+}
+
+.post:last-child {
+    border-bottom: none;
+}
+
+.post-meta {
+    margin: 0 0 6px 0;
+    color: #888888;
+    font-size: 12px;
+}
+
+.post-author {
+    color: #eeeeee;
+    font-weight: bold;
+}
+
+.post-body {
+    margin: 0;
+}

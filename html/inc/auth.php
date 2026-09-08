@@ -98,6 +98,11 @@ function can_read(array $group, ?array $user): bool
     return membership_in($group['id'], $user['id']) !== null;
 }
 
+function can_post(array $group, ?array $user): bool
+{
+    return $user !== null && can_read($group, $user);
+}
+
 function role_name(string $role): string
 {
     return match ($role) {

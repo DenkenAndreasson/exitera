@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/auth.php';
 require_once __DIR__ . '/../inc/box.php';
+require_once __DIR__ . '/../inc/topics.php';
 
 $current_user = current_user();
 $group_id = (int) ($_GET['id'] ?? 0);
@@ -31,6 +32,9 @@ if (!$group) {
     $membership = membership_in($group['id'], $current_user['id']);
 }
 
+$topics   = $error === null ? topic_list((int) $group['id']) : [];
+$may_post = $error === null && can_post($group, $current_user);
+
 $page_name = $error === null ? $group['name'] : 'Ingen åtkomst';
 
 require __DIR__ . '/../inc/header.php';
@@ -58,6 +62,35 @@ require __DIR__ . '/../inc/header.php';
                 · Du ser den här sidan som <strong>admin</strong>
             <?php endif; ?>
         </p>
+    <?php box_end(); ?>
+
+    <?php box_start('Trådar'); ?>
+
+        <?php if ($may_post): ?>
+            <p><a href="/topic/create/?group=<?= (int) $group['id'] ?>">Nytt ämne</a></p>
+        <?php endif; ?>
+
+        <?php if (empty($topics)): ?>
+            <p class="muted">Inga trådar än.</p>
+        <?php else: ?>
+            <ul class="group-list">
+                <?php foreach ($topics as $topic): ?>
+                    <li class="guild-row">
+                        <div>
+                            <a class="group-name" href="/topic/?id=<?= (int) $topic['id'] ?>">
+                                <?= htmlspecialchars($topic['title']) ?>
+                            </a><br>
+                            <span class="group-desc">
+                                av <?= htmlspecialchars(author_name($topic)) ?>
+                                · <?= (int) $topic['post_count'] ?> inlägg
+                            </span>
+                        </div>
+                        <span class="member-count"><?= htmlspecialchars($topic['last_activity']) ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+
     <?php box_end(); ?>
 
 <?php endif; ?>
