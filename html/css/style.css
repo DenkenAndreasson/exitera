@@ -259,3 +259,13 @@ button:disabled {
 .post-body {
     margin: 0;
 }
+
+.post-actions {
+    margin-top: 8px;
+}
+
+.post-actions button {
+    margin-top: 0;
+    padding: 3px 10px;
+    font-size: 12px;
+}

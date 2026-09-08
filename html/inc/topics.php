@@ -61,11 +61,11 @@ function topic_with_group(int $topic_id): ?array
 function post_list(int $topic_id): array
 {
     $stmt = get_db()->prepare(
-        "SELECT p.id, p.body, p.created_at,
+        "SELECT p.id, p.body, p.created_at, p.deleted_at,
                 u.character_name, u.first_name
          FROM posts p
          LEFT JOIN users u ON u.id = p.user_id
-         WHERE p.topic_id = ? AND p.deleted_at IS NULL
+         WHERE p.topic_id = ?
          ORDER BY p.created_at, p.id"
     );
     $stmt->execute([$topic_id]);
