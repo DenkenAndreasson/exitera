@@ -42,6 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             show_message(400, 'Tomt inlägg', 'Ett svar kan inte vara tomt.');
         }
 
+        if (mb_strlen($body) > 10000) {
+            show_message(400, 'För långt inlägg', 'Ett svar får vara högst 10 000 tecken.');
+        }
+
         $stmt = $db->prepare(
             "INSERT INTO posts (topic_id, user_id, body) VALUES (?, ?, ?)"
         );
@@ -127,7 +131,7 @@ require __DIR__ . '/../inc/header.php';
         <form method="post" action="/topic/?id=<?= $topic['id'] ?>">
             <input type="hidden" name="action" value="reply">
             <label for="body">Ditt svar</label>
-            <textarea id="body" name="body" rows="5" required></textarea>
+            <textarea id="body" name="body" rows="5" maxlength="10000" required></textarea>
             <button type="submit">Skicka svar</button>
         </form>
     <?php box_end(); ?>

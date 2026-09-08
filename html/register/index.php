@@ -21,6 +21,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Förnamn, efternamn, epost och lösenord måste fyllas i.';
     }
 
+    if (mb_strlen($first_name) > 50 || mb_strlen($last_name) > 50) {
+        $errors[] = 'Förnamn och efternamn får vara högst 50 tecken.';
+    }
+
+    if (mb_strlen($character_name) > 50) {
+        $errors[] = 'Karaktärsnamnet får vara högst 50 tecken.';
+    }
+
+    if (mb_strlen($email) > 255) {
+        $errors[] = 'Epostadressen får vara högst 255 tecken.';
+    } elseif ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = 'Skriv en giltig epostadress.';
+    }
+
+    if ($password !== '' && mb_strlen($password) < 8) {
+        $errors[] = 'Lösenordet måste vara minst 8 tecken.';
+    }
+
     if (empty($errors)) {
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
         $db = get_db();
@@ -64,19 +82,19 @@ require __DIR__ . '/../inc/header.php';
 
     <form method="post" action="/register/">
         <label for="first_name">Förnamn</label>
-        <input type="text" id="first_name" name="first_name" value="<?= htmlspecialchars($first_name) ?>" required>
+        <input type="text" id="first_name" name="first_name" maxlength="50" value="<?= htmlspecialchars($first_name) ?>" required>
 
         <label for="last_name">Efternamn</label>
-        <input type="text" id="last_name" name="last_name" value="<?= htmlspecialchars($last_name) ?>" required>
+        <input type="text" id="last_name" name="last_name" maxlength="50" value="<?= htmlspecialchars($last_name) ?>" required>
 
         <label for="email">E-post</label>
-        <input type="email" id="email" name="email" value="<?= htmlspecialchars($email) ?>" required>
+        <input type="email" id="email" name="email" maxlength="255" value="<?= htmlspecialchars($email) ?>" required>
 
         <label for="password">Lösenord</label>
-        <input type="password" id="password" name="password" required>
+        <input type="password" id="password" name="password" minlength="8" required>
 
         <label for="character_name">Karaktärsnamn (valfritt)</label>
-        <input type="text" id="character_name" name="character_name" value="<?= htmlspecialchars($character_name) ?>">
+        <input type="text" id="character_name" name="character_name" maxlength="50" value="<?= htmlspecialchars($character_name) ?>">
 
         <button type="submit">Skapa konto</button>
     </form>

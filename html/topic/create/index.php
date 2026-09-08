@@ -40,6 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($body === '') {
         $errors[] = 'Skriv ett första inlägg.';
+    } elseif (mb_strlen($body) > 10000) {
+        $errors[] = 'Inlägget får vara högst 10 000 tecken.';
     }
 
     if (empty($errors)) {
@@ -87,7 +89,7 @@ require __DIR__ . '/../../inc/header.php';
                value="<?= htmlspecialchars($title) ?>" required>
 
         <label for="body">Första inlägget</label>
-        <textarea id="body" name="body" rows="6" required><?= htmlspecialchars($body) ?></textarea>
+        <textarea id="body" name="body" rows="6" maxlength="10000" required><?= htmlspecialchars($body) ?></textarea>
 
         <button type="submit">Starta tråd</button>
     </form>
