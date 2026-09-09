@@ -55,12 +55,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
         $stmt->execute([$current_user['id'], $application_id]);
     } else {
-        if (my_guild((int) $application['user_id']) !== null) {
-            show_message(409, 'Går inte att godkänna', 'Sökanden har hunnit gå med i en annan guild.');
-        }
-
         try {
             $db->beginTransaction();
+
+            $stmt = $db->prepare(
+                "SELECT m.id
+                 FROM group_members m
+                 JOIN groups g ON g.id = m.group_id
+                 WHERE m.user_id = ? AND g.type = 'guild'
+                 FOR UPDATE"
+            );
+            $stmt->execute([$application['user_id']]);
+
+            if ($stmt->fetch() !== false) {
+                $db->rollBack();
+                show_message(409, 'Går inte att godkänna', 'Sökanden har hunnit gå med i en annan guild.');
+            }
 
             $stmt = $db->prepare(
                 "UPDATE applications

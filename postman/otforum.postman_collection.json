@@ -1,0 +1,280 @@
+{
+  "info": {
+    "name": "OT Forum — åtkomstkontroll",
+    "description": "Testar att skyddet håller när anropen går förbi gränssnittet.\n\nDe flesta anropen här ska svara 403. En 200 bevisar att sajten fungerar; en 403 bevisar att den skyddar.\n\nKör mapparna i ordning — mapp 2 loggar in och sätter de sessioner mapp 3 använder. Postman sköter kakorna själv.\n\nAlla testkonton har lösenordet test1234.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "csrf_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1 — Utan CSRF-token (ska ge 403)",
+      "description": "Varje POST-handler i appen, anropad utan csrf_token. Inget får gå igenom.",
+      "item": [
+        {
+          "name": "register",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/register/",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "first_name", "value": "Test" },
+              { "key": "last_name", "value": "Testsson" },
+              { "key": "email", "value": "csrf@ot.local" },
+              { "key": "password", "value": "test1234" }
+            ]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 — inget konto skapas utan token', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "login",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/login/",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "email", "value": "grunt@ot.local" },
+              { "key": "password", "value": "test1234" }
+            ]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 — login CSRF blockerat', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "logout",
+          "request": { "method": "POST", "url": "{{baseUrl}}/logout/" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 — annan sajt kan inte logga ut dig', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "group/apply",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/group/apply/",
+            "body": { "mode": "urlencoded", "urlencoded": [{ "key": "group_id", "value": "7" }]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "group/create",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/group/create/",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "name", "value": "CSRF Guild" },
+              { "key": "description", "value": "test" }
+            ]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "group/manage — godkänn",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/group/manage/?id=6",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "application_id", "value": "1" },
+              { "key": "decision", "value": "approve" }
+            ]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "topic/create",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/topic/create/?group=6",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "title", "value": "CSRF" },
+              { "key": "body", "value": "test" }
+            ]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "topic — svara",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/topic/?id=3",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "action", "value": "reply" },
+              { "key": "body", "value": "test" }
+            ]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "topic — ta bort inlägg",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/topic/?id=3",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "action", "value": "delete_post" },
+              { "key": "post_id", "value": "5" }
+            ]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "topic — ta bort tråd",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/topic/?id=3",
+            "body": { "mode": "urlencoded", "urlencoded": [{ "key": "action", "value": "delete_topic" }]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403', () => pm.response.to.have.status(403));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "2 — Inloggning (hjälpanrop)",
+      "description": "Hämtar en CSRF-token ur login-formuläret och loggar in. Kör före mapp 3.",
+      "item": [
+        {
+          "name": "Hämta CSRF-token",
+          "request": { "method": "GET", "url": "{{baseUrl}}/login/" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const m = pm.response.text().match(/name=\"csrf_token\" value=\"([a-f0-9]+)\"/);",
+            "pm.test('token finns i formuläret', () => pm.expect(m).to.not.be.null);",
+            "if (m) { pm.collectionVariables.set('csrf_token', m[1]); }",
+            "pm.test('token är 64 hextecken', () => pm.expect(m[1]).to.have.lengthOf(64));"
+          ]}}]
+        },
+        {
+          "name": "Logga in som grunt",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/login/",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "csrf_token", "value": "{{csrf_token}}" },
+              { "key": "email", "value": "grunt@ot.local" },
+              { "key": "password", "value": "test1234" }
+            ]}
+          },
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('302 — inloggning lyckas med giltig token', () => pm.response.to.have.status(302));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "3 — Åtkomstkontroll (ska ge 403)",
+      "description": "Inloggad som grunt, medlem i Red Rose men bara Grunt. Kräver att mapp 2 körts.",
+      "item": [
+        {
+          "name": "Gissad URL — guild man inte är med i",
+          "request": { "method": "GET", "url": "{{baseUrl}}/group/?id=7" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 — Black Knights är stängt för grunt', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "Manage Guild — Grunt är för låg roll",
+          "request": { "method": "GET", "url": "{{baseUrl}}/group/manage/?id=6" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 — kräver General eller högre', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "Godkänn ansökan — med giltig token men fel roll",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/group/manage/?id=6",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "csrf_token", "value": "{{csrf_token}}" },
+              { "key": "application_id", "value": "1" },
+              { "key": "decision", "value": "approve" }
+            ]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 — rollkontrollen sitter i handlern, inte i knappen', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "Ta bort inlägg — Grunt får inte moderera",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/topic/?id=3",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "csrf_token", "value": "{{csrf_token}}" },
+              { "key": "action", "value": "delete_post" },
+              { "key": "post_id", "value": "5" }
+            ]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 — kräver nivå 3', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "Ansök till guild — har redan en",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/group/apply/",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "csrf_token", "value": "{{csrf_token}}" },
+              { "key": "group_id", "value": "7" }
+            ]}
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 — en guild åt gången', () => pm.response.to.have.status(403));"
+          ]}}]
+        },
+        {
+          "name": "Ansök via GET — fel metod",
+          "request": { "method": "GET", "url": "{{baseUrl}}/group/apply/" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('405 — handlern tar bara POST', () => pm.response.to.have.status(405));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "4 — Öppet innehåll (ska ge 200)",
+      "description": "Kontrasten: communities är läsbara även utloggad. Kör gärna i ett tomt Postman-fönster utan kakor.",
+      "item": [
+        {
+          "name": "Community — läsbar",
+          "request": { "method": "GET", "url": "{{baseUrl}}/group/?id=1" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));"
+          ]}}]
+        },
+        {
+          "name": "Tråd i community — läsbar",
+          "request": { "method": "GET", "url": "{{baseUrl}}/topic/?id=1" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "pm.test('inget lösenordshash läcker', () => pm.expect(pm.response.text()).to.not.include('$2y$'));"
+          ]}}]
+        },
+        {
+          "name": "Tråd som inte finns",
+          "request": { "method": "GET", "url": "{{baseUrl}}/topic/?id=999" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('404', () => pm.response.to.have.status(404));",
+            "pm.test('ingen stacktrace i svaret', () => pm.expect(pm.response.text()).to.not.include('/var/www/html'));"
+          ]}}]
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,11 @@
 <?php
 
 if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+
     session_start();
 }
 
@@ -21,7 +26,11 @@ function current_user(): ?array
     }
 
     $db = get_db();
-    $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt = $db->prepare(
+        "SELECT id, first_name, last_name, email, character_name, is_admin
+         FROM users
+         WHERE id = ?"
+    );
     $stmt->execute([$_SESSION['user_id']]);
     $user = $stmt->fetch() ?: null;
 
