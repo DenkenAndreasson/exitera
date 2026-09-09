@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/auth.php';
 require_once __DIR__ . '/../inc/box.php';
+require_once __DIR__ . '/../inc/csrf.php';
 
 $page_name = 'Logga in';
 
@@ -8,6 +9,8 @@ $errors = [];
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+
     $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
@@ -37,6 +40,7 @@ require __DIR__ . '/../inc/header.php';
     <?php endforeach; ?>
 
     <form method="post" action="/login/">
+        <?php csrf_field(); ?>
         <label for="email">E-post</label>
         <input type="email" id="email" name="email" value="<?= htmlspecialchars($email) ?>" required>
 

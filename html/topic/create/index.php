@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../inc/auth.php';
 require_once __DIR__ . '/../../inc/box.php';
 require_once __DIR__ . '/../../inc/page.php';
 require_once __DIR__ . '/../../inc/topics.php';
+require_once __DIR__ . '/../../inc/csrf.php';
 
 $current_user = current_user();
 $group_id = (int) ($_GET['group'] ?? 0);
@@ -29,6 +30,8 @@ $title  = '';
 $body   = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+
     $title = trim($_POST['title'] ?? '');
     $body  = trim($_POST['body'] ?? '');
 
@@ -84,6 +87,7 @@ require __DIR__ . '/../../inc/header.php';
     <?php endforeach; ?>
 
     <form method="post" action="/topic/create/?group=<?= (int) $group['id'] ?>">
+        <?php csrf_field(); ?>
         <label for="title">Ämne</label>
         <input type="text" id="title" name="title" maxlength="200"
                value="<?= htmlspecialchars($title) ?>" required>

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../inc/auth.php';
 require_once __DIR__ . '/../../inc/box.php';
 require_once __DIR__ . '/../../inc/page.php';
+require_once __DIR__ . '/../../inc/csrf.php';
 
 $current_user = current_user();
 
@@ -25,6 +26,8 @@ if (role_level($current_user, membership_in($group_id, $current_user['id'])) < 3
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+
     $application_id = (int) ($_POST['application_id'] ?? 0);
     $decision       = $_POST['decision'] ?? '';
 
@@ -127,6 +130,7 @@ require __DIR__ . '/../../inc/header.php';
                         </span>
                     </div>
                     <form method="post" action="/group/manage/?id=<?= $group_id ?>">
+                        <?php csrf_field(); ?>
                         <input type="hidden" name="application_id" value="<?= (int) $application['id'] ?>">
                         <button type="submit" name="decision" value="approve">Godkänn</button>
                         <button type="submit" name="decision" value="reject">Avslå</button>

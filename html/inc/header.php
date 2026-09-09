@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/csrf.php';
 
 if (!isset($page_name)) {
     $page_name = 'Start';
@@ -27,6 +28,7 @@ $current_user = current_user();
             <a href="/register/">Skapa konto</a>
         <?php else: ?>
             <form method="post" action="/logout/" class="nav-logout">
+                <?php csrf_field(); ?>
                 <button type="submit">Logga ut</button>
             </form>
         <?php endif; ?>

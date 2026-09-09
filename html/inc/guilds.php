@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/csrf.php';
 
 function community_list(): array
 {
@@ -74,6 +75,7 @@ function guild_button(int $guild_id, string $state, string $from): void
 
         case 'apply':
             echo '<form method="post" action="/group/apply/">';
+            csrf_field();
             echo '<input type="hidden" name="group_id" value="' . $guild_id . '">';
             echo '<input type="hidden" name="from" value="' . htmlspecialchars($from) . '">';
             echo '<button type="submit">Ansök</button>';

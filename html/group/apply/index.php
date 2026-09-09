@@ -1,10 +1,13 @@
 <?php
 require_once __DIR__ . '/../../inc/auth.php';
 require_once __DIR__ . '/../../inc/page.php';
+require_once __DIR__ . '/../../inc/csrf.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     show_message(405, 'Fel metod', 'Ansökningar skickas via formuläret på startsidan.');
 }
+
+csrf_check();
 
 $current_user = current_user();
 

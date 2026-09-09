@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/auth.php';
 require_once __DIR__ . '/../inc/box.php';
+require_once __DIR__ . '/../inc/csrf.php';
 
 $page_name = 'Skapa konto';
 
@@ -11,6 +12,8 @@ $email = '';
 $character_name = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+
     $first_name     = trim($_POST['first_name'] ?? '');
     $last_name      = trim($_POST['last_name'] ?? '');
     $email          = trim($_POST['email'] ?? '');
@@ -81,6 +84,7 @@ require __DIR__ . '/../inc/header.php';
     <?php endforeach; ?>
 
     <form method="post" action="/register/">
+        <?php csrf_field(); ?>
         <label for="first_name">Förnamn</label>
         <input type="text" id="first_name" name="first_name" maxlength="50" value="<?= htmlspecialchars($first_name) ?>" required>
 

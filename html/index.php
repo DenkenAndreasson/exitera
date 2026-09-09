@@ -60,6 +60,7 @@ require __DIR__ . '/inc/header.php';
         <?php if ($current_user === null): ?>
             <?php box_start('Logga in'); ?>
                 <form method="post" action="/login/">
+                    <?php csrf_field(); ?>
                     <label for="email">E-post</label>
                     <input type="email" id="email" name="email" required>
 
@@ -74,6 +75,7 @@ require __DIR__ . '/inc/header.php';
             <?php box_start('Inloggad'); ?>
                 <p>Inloggad som <strong><?= htmlspecialchars($current_user['character_name'] ?? $current_user['first_name']) ?></strong>.</p>
                 <form method="post" action="/logout/">
+                    <?php csrf_field(); ?>
                     <button type="submit">Logga ut</button>
                 </form>
             <?php box_end(); ?>

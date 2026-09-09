@@ -3,6 +3,7 @@ require_once __DIR__ . '/../inc/auth.php';
 require_once __DIR__ . '/../inc/box.php';
 require_once __DIR__ . '/../inc/page.php';
 require_once __DIR__ . '/../inc/topics.php';
+require_once __DIR__ . '/../inc/csrf.php';
 
 $current_user = current_user();
 $topic_id = (int) ($_GET['id'] ?? 0);
@@ -28,6 +29,8 @@ $may_moderate = $current_user !== null
     && role_level($current_user, membership_in($group['id'], $current_user['id'])) >= 3;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+
     $action = $_POST['action'] ?? '';
     $db = get_db();
 
@@ -113,6 +116,7 @@ require __DIR__ . '/../inc/header.php';
                     <p class="post-body"><?= nl2br(htmlspecialchars($post['body'])) ?></p>
                     <?php if ($may_moderate): ?>
                         <form class="post-actions" method="post" action="/topic/?id=<?= $topic['id'] ?>">
+                            <?php csrf_field(); ?>
                             <input type="hidden" name="action" value="delete_post">
                             <input type="hidden" name="post_id" value="<?= (int) $post['id'] ?>">
                             <button type="submit">Ta bort inlägg</button>
@@ -129,6 +133,7 @@ require __DIR__ . '/../inc/header.php';
 
     <?php box_start('Svara'); ?>
         <form method="post" action="/topic/?id=<?= $topic['id'] ?>">
+            <?php csrf_field(); ?>
             <input type="hidden" name="action" value="reply">
             <label for="body">Ditt svar</label>
             <textarea id="body" name="body" rows="5" maxlength="10000" required></textarea>
@@ -144,6 +149,7 @@ require __DIR__ . '/../inc/header.php';
 
 <?php if ($may_moderate): ?>
     <form class="post-actions" method="post" action="/topic/?id=<?= $topic['id'] ?>">
+        <?php csrf_field(); ?>
         <input type="hidden" name="action" value="delete_topic">
         <button type="submit">Ta bort hela tråden</button>
     </form>
