@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../inc/auth.php';
 require_once __DIR__ . '/../inc/box.php';
 require_once __DIR__ . '/../inc/csrf.php';
+require_once __DIR__ . '/../inc/invites.php';
 
 $page_name = 'Skapa konto';
 
@@ -10,6 +11,7 @@ $first_name = '';
 $last_name = '';
 $email = '';
 $character_name = '';
+$invite = invite_param();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
@@ -62,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = (int) $db->lastInsertId();
             session_regenerate_id(true);
 
-            header('Location: /');
+            header('Location: ' . invite_return_url($invite));
             exit;
         } catch (PDOException $e) {
             if ($e->getCode() === '23000') {
@@ -77,14 +79,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require __DIR__ . '/../inc/header.php';
 ?>
 
-<?php box_start('Skapa konto'); ?>
+<?php page_title('Skapa konto'); ?>
+
+<?php box_start('Dina uppgifter'); ?>
 
     <?php foreach ($errors as $error): ?>
         <p class="error"><?= htmlspecialchars($error) ?></p>
     <?php endforeach; ?>
 
+    <?php if ($invite !== ''): ?>
+        <p class="muted">Du har en inbjudan till en guild. Efter registreringen
+        skickas du tillbaka till den.</p>
+    <?php endif; ?>
+
     <form method="post" action="/register/">
         <?php csrf_field(); ?>
+        <?php invite_field($invite); ?>
         <label for="first_name">Förnamn</label>
         <input type="text" id="first_name" name="first_name" maxlength="50" value="<?= htmlspecialchars($first_name) ?>" required>
 
@@ -100,7 +110,7 @@ require __DIR__ . '/../inc/header.php';
         <label for="character_name">Karaktärsnamn (valfritt)</label>
         <input type="text" id="character_name" name="character_name" maxlength="50" value="<?= htmlspecialchars($character_name) ?>">
 
-        <button type="submit">Skapa konto</button>
+        <button class="btn-primary" type="submit">Skapa konto</button>
     </form>
 
 <?php box_end(); ?>

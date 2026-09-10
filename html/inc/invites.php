@@ -53,3 +53,26 @@ function invite_url(string $token): string
 
     return 'http://' . $host . '/invite/?token=' . $token;
 }
+
+// Token som följer med genom inloggning och registrering. Ett token är alltid
+// 64 hex-tecken, allt annat kastas bort direkt.
+function invite_param(): string
+{
+    $token = $_SERVER['REQUEST_METHOD'] === 'POST'
+        ? ($_POST['invite'] ?? '')
+        : ($_GET['invite'] ?? '');
+
+    return preg_match('/^[0-9a-f]{64}$/', $token) === 1 ? $token : '';
+}
+
+function invite_return_url(string $token): string
+{
+    return $token !== '' ? '/invite/?token=' . $token : '/';
+}
+
+function invite_field(string $token): void
+{
+    if ($token !== '') {
+        echo '<input type="hidden" name="invite" value="' . htmlspecialchars($token) . '">';
+    }
+}

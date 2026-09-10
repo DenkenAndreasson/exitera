@@ -79,6 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$group_id, $current_user['id']]);
 
         $db->commit();
+
+        set_flash('Du är nu medlem i ' . $invite['group_name'] . '.');
     } catch (PDOException $e) {
         if ($db->inTransaction()) {
             $db->rollBack();
@@ -108,7 +110,9 @@ $page_name = 'Inbjudan till ' . $invite['group_name'];
 require __DIR__ . '/../inc/header.php';
 ?>
 
-<?php box_start('Inbjudan till ' . $invite['group_name']); ?>
+<?php page_title('Inbjudan till ' . $invite['group_name']); ?>
+
+<?php box_start('Gå med utan att ansöka'); ?>
 
     <p>
         Du har blivit inbjuden till guilden
@@ -118,13 +122,17 @@ require __DIR__ . '/../inc/header.php';
 
     <p class="muted">
         Länken går att använda <strong>en gång</strong> och slutar gälla
-        <?= htmlspecialchars($invite['expires_at']) ?>.
+        <?= htmlspecialchars(format_time($invite['expires_at'])) ?>.
     </p>
 
     <?php if ($current_user === null): ?>
 
-        <p><a href="/login/">Logga in</a> eller <a href="/register/">skapa ett konto</a>,
-        och öppna sedan länken igen.</p>
+        <p>
+            <a href="/register/?invite=<?= htmlspecialchars($token) ?>">Skapa ett konto</a>
+            eller <a href="/login/?invite=<?= htmlspecialchars($token) ?>">logga in</a>.
+        </p>
+
+        <p class="muted">Du kommer tillbaka hit direkt efteråt.</p>
 
     <?php elseif ($current_user['is_admin']): ?>
 
@@ -147,7 +155,7 @@ require __DIR__ . '/../inc/header.php';
         <form method="post" action="/invite/">
             <?php csrf_field(); ?>
             <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
-            <button type="submit">Gå med i <?= htmlspecialchars($invite['group_name']) ?></button>
+            <button class="btn-primary" type="submit">Gå med i <?= htmlspecialchars($invite['group_name']) ?></button>
         </form>
 
     <?php endif; ?>
