@@ -1,7 +1,7 @@
 </main>
 
 <footer class="site-footer">
-    <p>OT Forum</p>
+    <p>Exitera</p>
 </footer>
 
 </body>

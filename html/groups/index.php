@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/auth.php';
 require_once __DIR__ . '/../inc/box.php';
+require_once __DIR__ . '/../inc/page.php';
 require_once __DIR__ . '/../inc/guilds.php';
 
 $page_name = 'Alla grupper';
@@ -14,6 +15,8 @@ $pending_ids = $current_user !== null ? pending_group_ids($current_user['id']) :
 
 require __DIR__ . '/../inc/header.php';
 ?>
+
+<?php page_title('Alla grupper'); ?>
 
 <?php box_start('Communities'); ?>
     <ul class="group-list">

@@ -80,7 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require __DIR__ . '/../../inc/header.php';
 ?>
 
-<?php box_start('Nytt ämne i ' . $group['name']); ?>
+<?php page_title('Nytt ämne i ' . $group['name']); ?>
+
+<?php box_start('Ämne och första inlägget'); ?>
 
     <?php foreach ($errors as $error): ?>
         <p class="error"><?= htmlspecialchars($error) ?></p>
@@ -95,7 +97,7 @@ require __DIR__ . '/../../inc/header.php';
         <label for="body">Första inlägget</label>
         <textarea id="body" name="body" rows="6" maxlength="10000" required><?= htmlspecialchars($body) ?></textarea>
 
-        <button type="submit">Starta tråd</button>
+        <button class="btn-primary" type="submit">Starta tråd</button>
     </form>
 
 <?php box_end(); ?>

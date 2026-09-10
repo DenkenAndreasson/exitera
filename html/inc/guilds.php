@@ -93,7 +93,7 @@ function guild_button(int $guild_id, string $state, string $from): void
             csrf_field();
             echo '<input type="hidden" name="group_id" value="' . $guild_id . '">';
             echo '<input type="hidden" name="from" value="' . htmlspecialchars($from) . '">';
-            echo '<button type="submit">Ansök</button>';
+            echo '<button class="btn-primary" type="submit">Ansök</button>';
             echo '</form>';
             break;
 

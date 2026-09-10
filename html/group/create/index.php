@@ -62,6 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $db->commit();
 
+            set_flash('Guilden är skapad. Du är Guild leader.');
+
             header('Location: /group/?id=' . $group_id);
             exit;
         } catch (PDOException $e) {
@@ -81,7 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require __DIR__ . '/../../inc/header.php';
 ?>
 
-<?php box_start('Skapa guild'); ?>
+<?php page_title('Skapa guild'); ?>
+
+<?php box_start('Namn och beskrivning'); ?>
 
     <?php foreach ($errors as $error): ?>
         <p class="error"><?= htmlspecialchars($error) ?></p>
@@ -96,7 +100,7 @@ require __DIR__ . '/../../inc/header.php';
         <label for="description">Beskrivning</label>
         <textarea id="description" name="description" rows="4" required><?= htmlspecialchars($description) ?></textarea>
 
-        <button type="submit">Skapa guild</button>
+        <button class="btn-primary" type="submit">Skapa guild</button>
     </form>
 
     <p class="muted">Du blir Guild leader i guilden du skapar.</p>

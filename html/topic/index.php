@@ -69,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $stmt->execute([$topic['id']]);
 
+            set_flash('Tråden är borttagen.');
+
             header('Location: /group/?id=' . $group['id']);
             exit;
         }
@@ -80,6 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              WHERE id = ? AND topic_id = ? AND deleted_at IS NULL"
         );
         $stmt->execute([$post_id, $topic['id']]);
+
+        set_flash('Inlägget är borttaget.');
 
         header('Location: /topic/?id=' . $topic['id']);
         exit;
@@ -99,7 +103,9 @@ require __DIR__ . '/../inc/header.php';
     <a href="/group/?id=<?= $group['id'] ?>"><?= htmlspecialchars($group['name']) ?></a>
 </p>
 
-<?php box_start($topic['title']); ?>
+<?php page_title($topic['title']); ?>
+
+<?php box_start('Inlägg'); ?>
 
     <?php if (empty($posts)): ?>
         <p class="muted">Inga inlägg i den här tråden.</p>
@@ -111,7 +117,7 @@ require __DIR__ . '/../inc/header.php';
                 <?php else: ?>
                     <p class="post-meta">
                         <span class="post-author"><?= htmlspecialchars(author_name($post)) ?></span>
-                        · <?= htmlspecialchars($post['created_at']) ?>
+                        · <?= htmlspecialchars(format_time($post['created_at'])) ?>
                     </p>
                     <p class="post-body"><?= nl2br(htmlspecialchars($post['body'])) ?></p>
                     <?php if ($may_moderate): ?>
@@ -119,7 +125,7 @@ require __DIR__ . '/../inc/header.php';
                             <?php csrf_field(); ?>
                             <input type="hidden" name="action" value="delete_post">
                             <input type="hidden" name="post_id" value="<?= (int) $post['id'] ?>">
-                            <button type="submit">Ta bort inlägg</button>
+                            <button class="btn-danger" type="submit">Ta bort inlägg</button>
                         </form>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -129,29 +135,34 @@ require __DIR__ . '/../inc/header.php';
 
 <?php box_end(); ?>
 
-<?php if ($may_post): ?>
+<?php box_start('Svara'); ?>
 
-    <?php box_start('Svara'); ?>
+    <?php if ($may_post): ?>
         <form method="post" action="/topic/?id=<?= $topic['id'] ?>">
             <?php csrf_field(); ?>
             <input type="hidden" name="action" value="reply">
             <label for="body">Ditt svar</label>
             <textarea id="body" name="body" rows="5" maxlength="10000" required></textarea>
-            <button type="submit">Skicka svar</button>
+            <button class="btn-primary" type="submit">Skicka svar</button>
         </form>
-    <?php box_end(); ?>
+    <?php else: ?>
+        <label for="body">Ditt svar</label>
+        <textarea id="body" rows="5" disabled></textarea>
+        <div class="topic-actions">
+            <button type="button" disabled>Skicka svar</button>
+            <span class="muted">
+                Du måste vara <a href="/login/">inloggad</a> för att svara.
+            </span>
+        </div>
+    <?php endif; ?>
 
-<?php else: ?>
-
-    <p class="muted"><a href="/login/">Logga in</a> för att svara.</p>
-
-<?php endif; ?>
+<?php box_end(); ?>
 
 <?php if ($may_moderate): ?>
     <form class="post-actions" method="post" action="/topic/?id=<?= $topic['id'] ?>">
         <?php csrf_field(); ?>
         <input type="hidden" name="action" value="delete_topic">
-        <button type="submit">Ta bort hela tråden</button>
+        <button class="btn-danger" type="submit">Ta bort hela tråden</button>
     </form>
 <?php endif; ?>
 

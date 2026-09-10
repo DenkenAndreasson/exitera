@@ -40,11 +40,12 @@ $page_name = $group['name'];
 require __DIR__ . '/../inc/header.php';
 ?>
 
-<?php box_start($group['name']); ?>
+<?php page_title($group['name']); ?>
+
+<?php box_start($group['type'] === 'guild' ? 'Guild' : 'Community'); ?>
     <p><?= htmlspecialchars($group['description']) ?></p>
     <p class="muted">
-        <?= $group['type'] === 'guild' ? 'Guild' : 'Community' ?>
-        · <?= (int) $group['member_count'] ?>
+        <?= (int) $group['member_count'] ?>
         <?= $group['member_count'] == 1 ? 'medlem' : 'medlemmar' ?>
         <?php if ($membership !== null): ?>
             · Din roll:
@@ -57,9 +58,16 @@ require __DIR__ . '/../inc/header.php';
 
 <?php box_start('Trådar'); ?>
 
-    <?php if ($may_post): ?>
-        <p><a href="/topic/create/?group=<?= (int) $group['id'] ?>">Nytt ämne</a></p>
-    <?php endif; ?>
+    <div class="topic-actions">
+        <?php if ($may_post): ?>
+            <a class="btn" href="/topic/create/?group=<?= (int) $group['id'] ?>">Nytt ämne</a>
+        <?php else: ?>
+            <button type="button" disabled>Nytt ämne</button>
+            <span class="muted">
+                Du måste vara <a href="/login/">inloggad</a> för att skapa en tråd.
+            </span>
+        <?php endif; ?>
+    </div>
 
     <?php if (empty($topics)): ?>
         <p class="muted">Inga trådar än.</p>
@@ -76,7 +84,7 @@ require __DIR__ . '/../inc/header.php';
                             · <?= (int) $topic['post_count'] ?> inlägg
                         </span>
                     </div>
-                    <span class="member-count"><?= htmlspecialchars($topic['last_activity']) ?></span>
+                    <span class="member-count"><?= htmlspecialchars(format_time($topic['last_activity'])) ?></span>
                 </li>
             <?php endforeach; ?>
         </ul>

@@ -61,6 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  WHERE id = ? AND status = 'pending'"
             );
             $stmt->execute([$current_user['id'], $application_id]);
+
+            set_flash('Ansökan är avslagen.');
         } else {
             try {
                 $db->beginTransaction();
@@ -97,6 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$group_id, $application['user_id']]);
 
                 $db->commit();
+
+                set_flash('Ansökan är godkänd. Personen är nu Grunt i guilden.');
             } catch (PDOException $e) {
                 if ($db->inTransaction()) {
                     $db->rollBack();
@@ -164,12 +168,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     "UPDATE group_members SET role = ? WHERE group_id = ? AND user_id = ?"
                 );
                 $stmt->execute([$new_role, $group_id, $target_id]);
+
+                set_flash('Rollen är uppdaterad till ' . role_name($new_role) . '.');
             } else {
                 $stmt = $db->prepare("DELETE FROM group_members WHERE group_id = ? AND user_id = ?");
                 $stmt->execute([$group_id, $target_id]);
 
                 $stmt = $db->prepare("DELETE FROM applications WHERE group_id = ? AND user_id = ?");
                 $stmt->execute([$group_id, $target_id]);
+
+                set_flash('Medlemmen är borttagen ur guilden.');
             }
 
             $db->commit();
@@ -186,6 +194,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         create_invite($group_id, (int) $current_user['id']);
+
+        set_flash('Inbjudningslänken är skapad och gäller i 24 timmar.');
     } else {
         show_message(400, 'Ogiltig begäran', 'Okänd åtgärd.');
     }
@@ -212,7 +222,9 @@ $page_name = 'Manage ' . $group['name'];
 require __DIR__ . '/../../inc/header.php';
 ?>
 
-<?php box_start('Väntande ansökningar — ' . $group['name']); ?>
+<?php page_title('Manage ' . $group['name']); ?>
+
+<?php box_start('Väntande ansökningar'); ?>
 
     <?php if (empty($applications)): ?>
         <p class="muted">Inga väntande ansökningar.</p>
@@ -226,15 +238,15 @@ require __DIR__ . '/../../inc/header.php';
                         </span><br>
                         <span class="group-desc">
                             <?= htmlspecialchars($application['first_name'] . ' ' . $application['last_name']) ?>
-                            · ansökte <?= htmlspecialchars($application['created_at']) ?>
+                            · ansökte <?= htmlspecialchars(format_time($application['created_at'])) ?>
                         </span>
                     </div>
                     <form method="post" action="/group/manage/?id=<?= $group_id ?>">
                         <?php csrf_field(); ?>
                         <input type="hidden" name="action" value="decide">
                         <input type="hidden" name="application_id" value="<?= (int) $application['id'] ?>">
-                        <button type="submit" name="decision" value="approve">Godkänn</button>
-                        <button type="submit" name="decision" value="reject">Avslå</button>
+                        <button class="btn-primary" type="submit" name="decision" value="approve">Godkänn</button>
+                        <button class="btn-danger" type="submit" name="decision" value="reject">Avslå</button>
                     </form>
                 </li>
             <?php endforeach; ?>
@@ -243,7 +255,7 @@ require __DIR__ . '/../../inc/header.php';
 
 <?php box_end(); ?>
 
-<?php box_start('Medlemmar — ' . $group['name']); ?>
+<?php box_start('Medlemmar'); ?>
 
     <?php if ($my_level < 4): ?>
         <p class="muted">Bara Guild leader kan ändra roller.</p>
@@ -257,7 +269,7 @@ require __DIR__ . '/../../inc/header.php';
                     <span class="group-desc">
                         <?= htmlspecialchars($member['first_name'] . ' ' . $member['last_name']) ?>
                         · <?= htmlspecialchars(role_name($member['role'])) ?>
-                        · medlem sedan <?= htmlspecialchars($member['joined_at']) ?>
+                        · medlem sedan <?= htmlspecialchars(format_time($member['joined_at'])) ?>
                     </span>
                 </div>
 
@@ -274,7 +286,7 @@ require __DIR__ . '/../../inc/header.php';
                         </select>
                         <button type="submit" name="action" value="set_role">Spara</button>
                         <?php if ((int) $member['user_id'] !== (int) $current_user['id']): ?>
-                            <button type="submit" name="action" value="kick">Ta bort</button>
+                            <button class="btn-danger" type="submit" name="action" value="kick">Ta bort</button>
                         <?php endif; ?>
                     </form>
                 <?php endif; ?>
@@ -302,7 +314,7 @@ require __DIR__ . '/../../inc/header.php';
                     <li>
                         <code class="invite-url"><?= htmlspecialchars(invite_url($invite['token'])) ?></code><br>
                         <span class="group-desc">
-                            Giltig till <?= htmlspecialchars($invite['expires_at']) ?>
+                            Giltig till <?= htmlspecialchars(format_time($invite['expires_at'])) ?>
                             · skapad av <?= htmlspecialchars(author_name($invite)) ?>
                         </span>
                     </li>

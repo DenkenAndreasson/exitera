@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/inc/auth.php';
 require_once __DIR__ . '/inc/box.php';
+require_once __DIR__ . '/inc/page.php';
 require_once __DIR__ . '/inc/guilds.php';
 
 $page_name = 'Start';
@@ -17,6 +18,8 @@ $waiting = ($my_guild !== null && $my_level >= 3) ? pending_count((int) $my_guil
 
 require __DIR__ . '/inc/header.php';
 ?>
+
+<?php page_title('Välkommen till Exitera'); ?>
 
 <div class="layout">
     <div class="col-main">
@@ -67,7 +70,7 @@ require __DIR__ . '/inc/header.php';
                     <label for="password">Lösenord</label>
                     <input type="password" id="password" name="password" required>
 
-                    <button type="submit">Logga in</button>
+                    <button class="btn-primary" type="submit">Logga in</button>
                 </form>
                 <p class="muted">Har du inget konto? <a href="/register/">Skapa ett här</a>.</p>
             <?php box_end(); ?>

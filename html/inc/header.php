@@ -13,14 +13,17 @@ $current_user = current_user();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($page_name) ?> - OT Forum</title>
+    <title><?= htmlspecialchars($page_name) ?> - Exitera</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header class="site-header">
-    <h1><a href="/">OT Forum</a></h1>
-    <nav>
+    <p class="site-title"><a href="/">Exitera</a></p>
+</header>
+
+<nav class="site-nav">
+    <div class="nav-inner">
         <a href="/">Start</a>
         <a href="/groups/">Alla grupper</a>
         <?php if ($current_user === null): ?>
@@ -32,7 +35,9 @@ $current_user = current_user();
                 <button type="submit">Logga ut</button>
             </form>
         <?php endif; ?>
-    </nav>
-</header>
+    </div>
+</nav>
 
 <main>
+
+<?php show_flash(); ?>

@@ -59,6 +59,8 @@ try {
     }
 }
 
+set_flash('Ansökan är skickad. Guildens ledning får svara.');
+
 $from = $_POST['from'] ?? '/';
 header('Location: ' . (in_array($from, ['/', '/groups/'], true) ? $from : '/'));
 exit;
