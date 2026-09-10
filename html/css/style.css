@@ -269,3 +269,22 @@ button:disabled {
     padding: 3px 10px;
     font-size: 12px;
 }
+
+.invite-url {
+    display: inline-block;
+    padding: 4px 6px;
+    background: #1b1b1f;
+    border: 1px solid #3a3a42;
+    color: #c9a227;
+    font-size: 12px;
+    word-break: break-all;
+}
+
+.guild-row select {
+    padding: 5px 6px;
+    background: #1b1b1f;
+    border: 1px solid #3a3a42;
+    color: #dddddd;
+    font-family: inherit;
+    font-size: 13px;
+}

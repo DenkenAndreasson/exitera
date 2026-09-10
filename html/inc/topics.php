@@ -2,11 +2,6 @@
 
 require_once __DIR__ . '/auth.php';
 
-function author_name(array $row): string
-{
-    return $row['character_name'] ?? $row['first_name'] ?? 'Borttagen användare';
-}
-
 function topic_list(int $group_id): array
 {
     $stmt = get_db()->prepare(

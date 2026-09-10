@@ -3,6 +3,8 @@ require_once __DIR__ . '/../../inc/auth.php';
 require_once __DIR__ . '/../../inc/box.php';
 require_once __DIR__ . '/../../inc/page.php';
 require_once __DIR__ . '/../../inc/csrf.php';
+require_once __DIR__ . '/../../inc/guilds.php';
+require_once __DIR__ . '/../../inc/invites.php';
 
 $current_user = current_user();
 
@@ -21,73 +23,154 @@ if (!$group || $group['type'] !== 'guild') {
     show_message(404, 'Hittades inte', 'Den guilden finns inte.');
 }
 
-if (role_level($current_user, membership_in($group_id, $current_user['id'])) < 3) {
+$my_level = role_level($current_user, membership_in($group_id, $current_user['id']));
+
+if ($my_level < 3) {
     show_message(403, 'Ingen åtkomst', 'Bara General och uppåt kan hantera ansökningar i den här guilden.');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
 
-    $application_id = (int) ($_POST['application_id'] ?? 0);
-    $decision       = $_POST['decision'] ?? '';
+    $action = $_POST['action'] ?? '';
 
-    if (!in_array($decision, ['approve', 'reject'], true)) {
-        show_message(400, 'Ogiltigt beslut', 'Beslutet måste vara godkänn eller avslå.');
-    }
+    if ($action === 'decide') {
+        $application_id = (int) ($_POST['application_id'] ?? 0);
+        $decision       = $_POST['decision'] ?? '';
 
-    $stmt = $db->prepare("SELECT id, group_id, user_id, status FROM applications WHERE id = ?");
-    $stmt->execute([$application_id]);
-    $application = $stmt->fetch();
+        if (!in_array($decision, ['approve', 'reject'], true)) {
+            show_message(400, 'Ogiltigt beslut', 'Beslutet måste vara godkänn eller avslå.');
+        }
 
-    if (!$application || (int) $application['group_id'] !== $group_id) {
-        show_message(404, 'Hittades inte', 'Den ansökan finns inte i den här guilden.');
-    }
+        $stmt = $db->prepare("SELECT id, group_id, user_id, status FROM applications WHERE id = ?");
+        $stmt->execute([$application_id]);
+        $application = $stmt->fetch();
 
-    if ($application['status'] !== 'pending') {
-        show_message(409, 'Redan hanterad', 'Ansökan är redan hanterad.');
-    }
+        if (!$application || (int) $application['group_id'] !== $group_id) {
+            show_message(404, 'Hittades inte', 'Den ansökan finns inte i den här guilden.');
+        }
 
-    if ($decision === 'reject') {
-        $stmt = $db->prepare(
-            "UPDATE applications
-             SET status = 'rejected', handled_by = ?, handled_at = NOW()
-             WHERE id = ? AND status = 'pending'"
-        );
-        $stmt->execute([$current_user['id'], $application_id]);
-    } else {
+        if ($application['status'] !== 'pending') {
+            show_message(409, 'Redan hanterad', 'Ansökan är redan hanterad.');
+        }
+
+        if ($decision === 'reject') {
+            $stmt = $db->prepare(
+                "UPDATE applications
+                 SET status = 'rejected', handled_by = ?, handled_at = NOW()
+                 WHERE id = ? AND status = 'pending'"
+            );
+            $stmt->execute([$current_user['id'], $application_id]);
+        } else {
+            try {
+                $db->beginTransaction();
+
+                $stmt = $db->prepare(
+                    "SELECT m.id
+                     FROM group_members m
+                     JOIN groups g ON g.id = m.group_id
+                     WHERE m.user_id = ? AND g.type = 'guild'
+                     FOR UPDATE"
+                );
+                $stmt->execute([$application['user_id']]);
+
+                if ($stmt->fetch() !== false) {
+                    $db->rollBack();
+                    show_message(409, 'Går inte att godkänna', 'Sökanden har hunnit gå med i en annan guild.');
+                }
+
+                $stmt = $db->prepare(
+                    "UPDATE applications
+                     SET status = 'approved', handled_by = ?, handled_at = NOW()
+                     WHERE id = ? AND status = 'pending'"
+                );
+                $stmt->execute([$current_user['id'], $application_id]);
+
+                if ($stmt->rowCount() === 0) {
+                    $db->rollBack();
+                    show_message(409, 'Redan hanterad', 'Någon annan hann hantera ansökan först.');
+                }
+
+                $stmt = $db->prepare(
+                    "INSERT INTO group_members (group_id, user_id, role) VALUES (?, ?, 'grunt')"
+                );
+                $stmt->execute([$group_id, $application['user_id']]);
+
+                $db->commit();
+            } catch (PDOException $e) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+
+                if ($e->getCode() === '23000') {
+                    show_message(409, 'Går inte att godkänna', 'Sökanden är redan medlem i guilden.');
+                }
+
+                throw $e;
+            }
+        }
+    } elseif ($action === 'set_role' || $action === 'kick') {
+        if ($my_level < 4) {
+            show_message(403, 'Ingen åtkomst', 'Bara Guild leader kan ändra roller och ta bort medlemmar.');
+        }
+
+        $target_id = (int) ($_POST['user_id'] ?? 0);
+        $new_role  = $_POST['role'] ?? '';
+
+        if ($action === 'set_role' && !in_array($new_role, ['grunt', 'general', 'leader'], true)) {
+            show_message(400, 'Ogiltig roll', 'Rollen måste vara Grunt, General eller Guild leader.');
+        }
+
+        if ($action === 'kick' && $target_id === (int) $current_user['id']) {
+            show_message(409, 'Går inte', 'Du kan inte ta bort dig själv ur guilden.');
+        }
+
         try {
             $db->beginTransaction();
 
             $stmt = $db->prepare(
-                "SELECT m.id
-                 FROM group_members m
-                 JOIN groups g ON g.id = m.group_id
-                 WHERE m.user_id = ? AND g.type = 'guild'
-                 FOR UPDATE"
+                "SELECT user_id, role FROM group_members WHERE group_id = ? FOR UPDATE"
             );
-            $stmt->execute([$application['user_id']]);
+            $stmt->execute([$group_id]);
 
-            if ($stmt->fetch() !== false) {
-                $db->rollBack();
-                show_message(409, 'Går inte att godkänna', 'Sökanden har hunnit gå med i en annan guild.');
+            $target  = null;
+            $leaders = 0;
+
+            foreach ($stmt->fetchAll() as $member) {
+                if ((int) $member['user_id'] === $target_id) {
+                    $target = $member;
+                }
+
+                if ($member['role'] === 'leader') {
+                    $leaders++;
+                }
             }
 
-            $stmt = $db->prepare(
-                "UPDATE applications
-                 SET status = 'approved', handled_by = ?, handled_at = NOW()
-                 WHERE id = ? AND status = 'pending'"
-            );
-            $stmt->execute([$current_user['id'], $application_id]);
-
-            if ($stmt->rowCount() === 0) {
+            if ($target === null) {
                 $db->rollBack();
-                show_message(409, 'Redan hanterad', 'Någon annan hann hantera ansökan först.');
+                show_message(404, 'Hittades inte', 'Den användaren är inte medlem i den här guilden.');
             }
 
-            $stmt = $db->prepare(
-                "INSERT INTO group_members (group_id, user_id, role) VALUES (?, ?, 'grunt')"
-            );
-            $stmt->execute([$group_id, $application['user_id']]);
+            $loses_leader = $target['role'] === 'leader'
+                && ($action === 'kick' || $new_role !== 'leader');
+
+            if ($loses_leader && $leaders === 1) {
+                $db->rollBack();
+                show_message(409, 'Går inte', 'Guilden måste ha minst en Guild leader kvar.');
+            }
+
+            if ($action === 'set_role') {
+                $stmt = $db->prepare(
+                    "UPDATE group_members SET role = ? WHERE group_id = ? AND user_id = ?"
+                );
+                $stmt->execute([$new_role, $group_id, $target_id]);
+            } else {
+                $stmt = $db->prepare("DELETE FROM group_members WHERE group_id = ? AND user_id = ?");
+                $stmt->execute([$group_id, $target_id]);
+
+                $stmt = $db->prepare("DELETE FROM applications WHERE group_id = ? AND user_id = ?");
+                $stmt->execute([$group_id, $target_id]);
+            }
 
             $db->commit();
         } catch (PDOException $e) {
@@ -95,12 +178,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->rollBack();
             }
 
-            if ($e->getCode() === '23000') {
-                show_message(409, 'Går inte att godkänna', 'Sökanden är redan medlem i guilden.');
-            }
-
             throw $e;
         }
+    } elseif ($action === 'create_invite') {
+        if ($my_level < 4) {
+            show_message(403, 'Ingen åtkomst', 'Bara Guild leader kan skapa inbjudningslänkar.');
+        }
+
+        create_invite($group_id, (int) $current_user['id']);
+    } else {
+        show_message(400, 'Ogiltig begäran', 'Okänd åtgärd.');
     }
 
     header('Location: /group/manage/?id=' . $group_id);
@@ -117,6 +204,9 @@ $stmt = $db->prepare(
 $stmt->execute([$group_id]);
 $applications = $stmt->fetchAll();
 
+$members = member_list($group_id);
+$invites = $my_level >= 4 ? active_invites($group_id) : [];
+
 $page_name = 'Manage ' . $group['name'];
 
 require __DIR__ . '/../../inc/header.php';
@@ -132,7 +222,7 @@ require __DIR__ . '/../../inc/header.php';
                 <li class="guild-row">
                     <div>
                         <span class="group-name">
-                            <?= htmlspecialchars($application['character_name'] ?? $application['first_name']) ?>
+                            <?= htmlspecialchars(author_name($application)) ?>
                         </span><br>
                         <span class="group-desc">
                             <?= htmlspecialchars($application['first_name'] . ' ' . $application['last_name']) ?>
@@ -141,6 +231,7 @@ require __DIR__ . '/../../inc/header.php';
                     </div>
                     <form method="post" action="/group/manage/?id=<?= $group_id ?>">
                         <?php csrf_field(); ?>
+                        <input type="hidden" name="action" value="decide">
                         <input type="hidden" name="application_id" value="<?= (int) $application['id'] ?>">
                         <button type="submit" name="decision" value="approve">Godkänn</button>
                         <button type="submit" name="decision" value="reject">Avslå</button>
@@ -151,6 +242,82 @@ require __DIR__ . '/../../inc/header.php';
     <?php endif; ?>
 
 <?php box_end(); ?>
+
+<?php box_start('Medlemmar — ' . $group['name']); ?>
+
+    <?php if ($my_level < 4): ?>
+        <p class="muted">Bara Guild leader kan ändra roller.</p>
+    <?php endif; ?>
+
+    <ul class="group-list">
+        <?php foreach ($members as $member): ?>
+            <li class="guild-row">
+                <div>
+                    <span class="group-name"><?= htmlspecialchars(author_name($member)) ?></span><br>
+                    <span class="group-desc">
+                        <?= htmlspecialchars($member['first_name'] . ' ' . $member['last_name']) ?>
+                        · <?= htmlspecialchars(role_name($member['role'])) ?>
+                        · medlem sedan <?= htmlspecialchars($member['joined_at']) ?>
+                    </span>
+                </div>
+
+                <?php if ($my_level >= 4): ?>
+                    <form method="post" action="/group/manage/?id=<?= $group_id ?>">
+                        <?php csrf_field(); ?>
+                        <input type="hidden" name="user_id" value="<?= (int) $member['user_id'] ?>">
+                        <select name="role">
+                            <?php foreach (['grunt', 'general', 'leader'] as $role): ?>
+                                <option value="<?= $role ?>" <?= $member['role'] === $role ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars(role_name($role)) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="submit" name="action" value="set_role">Spara</button>
+                        <?php if ((int) $member['user_id'] !== (int) $current_user['id']): ?>
+                            <button type="submit" name="action" value="kick">Ta bort</button>
+                        <?php endif; ?>
+                    </form>
+                <?php endif; ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+
+<?php box_end(); ?>
+
+<?php if ($my_level >= 4): ?>
+
+    <?php box_start('Inbjudningslänkar'); ?>
+
+        <p class="muted">
+            En inbjudningslänk går att använda <strong>en gång</strong> och är giltig i
+            <strong>24 timmar</strong>. Den som använder den blir medlem direkt, utan
+            att ansöka.
+        </p>
+
+        <?php if (empty($invites)): ?>
+            <p class="muted">Inga aktiva länkar just nu.</p>
+        <?php else: ?>
+            <ul class="group-list">
+                <?php foreach ($invites as $invite): ?>
+                    <li>
+                        <code class="invite-url"><?= htmlspecialchars(invite_url($invite['token'])) ?></code><br>
+                        <span class="group-desc">
+                            Giltig till <?= htmlspecialchars($invite['expires_at']) ?>
+                            · skapad av <?= htmlspecialchars(author_name($invite)) ?>
+                        </span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+
+        <form method="post" action="/group/manage/?id=<?= $group_id ?>">
+            <?php csrf_field(); ?>
+            <button type="submit" name="action" value="create_invite">Skapa inbjudningslänk</button>
+        </form>
+
+    <?php box_end(); ?>
+
+<?php endif; ?>
 
 <p class="muted"><a href="/group/?id=<?= $group_id ?>">Tillbaka till <?= htmlspecialchars($group['name']) ?></a></p>
 

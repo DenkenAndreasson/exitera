@@ -25,6 +25,21 @@ function guild_list(): array
     )->fetchAll();
 }
 
+function member_list(int $group_id): array
+{
+    $stmt = get_db()->prepare(
+        "SELECT m.user_id, m.role, m.joined_at,
+                u.first_name, u.last_name, u.character_name
+         FROM group_members m
+         JOIN users u ON u.id = m.user_id
+         WHERE m.group_id = ?
+         ORDER BY FIELD(m.role, 'leader', 'general', 'grunt'), u.first_name"
+    );
+    $stmt->execute([$group_id]);
+
+    return $stmt->fetchAll();
+}
+
 function pending_group_ids(int $user_id): array
 {
     $stmt = get_db()->prepare(

@@ -112,6 +112,11 @@ function can_post(array $group, ?array $user): bool
     return $user !== null && can_read($group, $user);
 }
 
+function author_name(array $row): string
+{
+    return $row['character_name'] ?? $row['first_name'] ?? 'Borttagen användare';
+}
+
 function role_name(string $role): string
 {
     return match ($role) {
